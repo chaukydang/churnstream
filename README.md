@@ -1,58 +1,49 @@
-# Streamify-local
+# churnstream
 
-A streaming data pipeline you can run **on a laptop in one command**, extended with
-**feature engineering, a churn-prediction model and a live dashboard**.
+I took [ankurchavda/streamify](https://github.com/ankurchavda/streamify) (Kafka, Spark Streaming, dbt, Airflow and Terraform on GCP) and reworked it into something I can run on my laptop, then added a churn model and a dashboard on top.
+The original README is in [`docs/ORIGINAL_README.md`](docs/ORIGINAL_README.md) and the upstream commit history is kept.
+I built this with help from an AI assistant (Claude).
 
-Derived from [ankurchavda/streamify](https://github.com/ankurchavda/streamify)
-(Kafka + Spark Streaming + dbt + Airflow + Terraform on GCP). The original README is kept in
-[`docs/ORIGINAL_README.md`](docs/ORIGINAL_README.md); git history preserves the original commits.
+## What I changed
 
-## What I added
-
-| Area | Change |
-|---|---|
-| Local mode | Spark runs on `local[*]`, writes parquet to disk; Kafka is optional (`SOURCE=file`). Config via env vars (`SPARK_MASTER`, `STORAGE_PATH`, `TRIGGER_INTERVAL`, `RUN_SECONDS`) - defaults still match the original GCP/YARN setup |
-| Data | `scripts/generate_fake_events.py`: eventsim-style events where users have a hidden churn propensity (so there is something to learn) |
-| Bug fix | `string_decode` UDF crashed the whole stream on real unicode; now falls back safely |
-| ML | `ml/features.py` (per-user features from events *before* a cutoff, label from events *after* it - no leakage) and `ml/train.py` (logistic regression vs gradient boosting, hold-out + 5-fold CV, out-of-fold scores) |
-| Dashboard | `dashboard/app.py` (Streamlit): KPIs, listens per day/hour, top songs, page mix, churn-risk distribution, top features, highest-risk users |
-| Quality | `tests/` (pytest) and a `Makefile` |
+- **Runs locally.** Spark runs on `local[*]` and writes parquet to disk. Kafka is optional: `SOURCE=file` reads JSON lines instead. Everything is driven by env vars (`SPARK_MASTER`, `STORAGE_PATH`, `TRIGGER_INTERVAL`, `RUN_SECONDS`), and the defaults still match the original GCP/YARN setup.
+- **Fake data with a signal.** `scripts/generate_fake_events.py` simulates users who slowly disengage before cancelling, so the model has something real to learn.
+- **Bug fix.** The `string_decode` UDF crashed the whole stream on real unicode characters. It now falls back instead of failing.
+- **Churn model** (`ml/`). Features come from events before a cutoff and the label from events after it, so there is no leakage. I compare logistic regression and gradient boosting, with a hold-out set and 5-fold CV.
+- **Dashboard** (`dashboard/app.py`, Streamlit). KPIs, listens by day/hour, top songs, page mix, churn-risk distribution and the highest-risk users.
+- **Tests and Makefile.** `make all` runs the whole thing.
 
 ```
-simulate -> JSON lines -> Spark Structured Streaming -> parquet (month/day/hour)
-                                                   |-> ml: features -> churn model -> scores
-                                                   '-> Streamlit dashboard
+simulate -> JSON lines -> Spark Structured Streaming -> parquet
+                                                    |-> features -> churn model -> scores
+                                                    '-> Streamlit dashboard
 ```
 
-## Run it locally (no Docker, no GCP)
+## Run it (no Docker, no GCP)
 
-Needs Python 3.9+ and Java 11/17.
+Python 3.9+ and Java 11/17.
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 make install
-unset SPARK_HOME          # if Homebrew Spark is installed it clashes with pip's pyspark
-make all                  # simulate -> stream (~1 min) -> train
-make dashboard            # http://localhost:8501
+unset SPARK_HOME      # Homebrew's Spark clashes with pip's pyspark
+make all              # simulate -> stream (~1 min) -> train
+make dashboard        # http://localhost:8501
 make test
 ```
 
-## Results (synthetic data!)
+## Results
 
-On 300 simulated users / 14 days the best model reaches ROC-AUC ~0.94 (hold-out) / ~0.93 (5-fold CV).
-These numbers only show the pipeline works end to end: the churn signal is built into the
-generator, so they say nothing about real-world accuracy.
+With 300 simulated users over 14 days the best model gets ROC-AUC around 0.94 on a hold-out set and 0.93 in 5-fold CV.
+The churn signal is built into the generator, so this only shows the pipeline works. It says nothing about real accuracy.
+My first version scored AUC 1.0, which meant the fake data was too easy, so I added noise and softened the signal.
 
 ## Kafka and GCP
 
-* **Kafka:** drop `SOURCE=file`, start a broker (`kafka/docker-compose.yml`) and submit with
-  `--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3`. Something has to produce events into
-  the `listen_events`, `page_view_events`, `auth_events` topics (eventsim, as in the original).
-* **GCP:** with `STORAGE_PATH` unset the Spark job writes to `gs://$GCP_GCS_BUCKET` as in the original;
-  `pip install -r requirements-gcp.txt` lets `ml/` and `dashboard/` read `gs://` paths
-  (`make train OUT=gs://bucket`). Terraform / Airflow / dbt are unchanged from upstream.
-  *The GCP and Kafka paths have not been exercised in this fork yet - only the local path is tested.*
+- **Kafka:** drop `SOURCE=file`, start a broker with `kafka/docker-compose.yml`, and submit with `--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3`. Something still has to produce events into `listen_events`, `page_view_events` and `auth_events` (eventsim, as upstream).
+- **GCP:** with `STORAGE_PATH` unset the job writes to `gs://$GCP_GCS_BUCKET` like upstream. `pip install -r requirements-gcp.txt` lets `ml/` and the dashboard read `gs://`. Terraform, Airflow and dbt are unchanged.
+- **Not tested yet:** the Kafka and GCP paths. Only the local path has been run.
 
-## Ideas next
+## Next
 
-Kafka producer + docker-compose slimmed to broker only; dbt on DuckDB; scheduled retraining; model registry.
+Kafka producer with a slimmed docker-compose, dbt on DuckDB, scheduled retraining.
