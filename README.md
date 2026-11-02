@@ -68,4 +68,4 @@ On 300 simulated users over 14 days the best model reaches ROC-AUC about 0.94 (h
 Kafka producer with a slimmed docker-compose, dbt on DuckDB, scheduled retraining.
 
 ---
-*Developed with AI assistance (Claude) for code scaffolding; design choices and testing are mine.*
+*Developed with AI assistance (Claude).*
