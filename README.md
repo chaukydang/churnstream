@@ -67,6 +67,19 @@ make dashboard        # http://localhost:8501
 make test
 ```
 
+### Dashboard demo (Streamlit)
+
+Live demo: **https://churnstream.streamlit.app** *(update this link after deploying)*
+
+The dashboard falls back to a small committed sample in `demo_data/` when no live data exists, so it works on a fresh clone and on Streamlit Community Cloud.
+
+```bash
+make dashboard                         # live data from out/ and ml/artifacts/
+python scripts/make_demo_data.py       # refresh demo_data/ from the latest run
+```
+
+To deploy it yourself (free): open [share.streamlit.io](https://share.streamlit.io), sign in with GitHub, click **Create app**, pick this repo, branch `main`, main file `dashboard/app.py`, then **Deploy**. Dependencies come from `dashboard/requirements.txt`.
+
 ### Results
 
 On 300 simulated users over 14 days the best model reaches ROC-AUC about 0.94 (hold-out) and 0.93 (5-fold CV). The churn signal is built into the generator, so this shows the pipeline works, not real-world accuracy.

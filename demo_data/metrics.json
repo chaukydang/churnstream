@@ -1,0 +1,17 @@
+{
+  "n_users": 299,
+  "churn_rate": 0.2608695652173913,
+  "cutoff": "2026-10-29 16:40:31.530000",
+  "models": {
+    "logistic_regression": {
+      "roc_auc": 0.9418181818181818,
+      "pr_auc": 0.9057035263717892,
+      "cv_roc_auc": 0.9282399350272654
+    },
+    "gradient_boosting": {
+      "roc_auc": 0.910909090909091,
+      "pr_auc": 0.8571962118180606
+    }
+  },
+  "best_model": "logistic_regression"
+}
