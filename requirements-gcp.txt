@@ -1,0 +1,2 @@
+# extra deps to read/write gs:// paths from ml/ and dashboard/ (untested here)
+gcsfs

@@ -1,1 +1,10 @@
-logs/
+.venv/
+__pycache__/
+*.pyc
+sample_input/
+out/
+ml/artifacts/
+.DS_Store
+spark-warehouse/
+metastore_db/
+derby.log

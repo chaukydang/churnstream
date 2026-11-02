@@ -1,3 +1,4 @@
+import os
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, month, hour, dayofmonth, col, year, udf
 
@@ -5,16 +6,19 @@ from pyspark.sql.functions import from_json, col, month, hour, dayofmonth, col, 
 @udf
 def string_decode(s, encoding='utf-8'):
     if s:
-        return (s.encode('latin1')         # To bytes, required by 'unicode-escape'
-                .decode('unicode-escape') # Perform the actual octal-escaping decode
-                .encode('latin1')         # 1:1 mapping back to bytes
-                .decode(encoding)         # Decode original encoding
-                .strip('\"'))
-
+        try:
+            return (s.encode('latin1')         # To bytes, required by 'unicode-escape'
+                    .decode('unicode-escape') # Perform the actual octal-escaping decode
+                    .encode('latin1')         # 1:1 mapping back to bytes
+                    .decode(encoding)         # Decode original encoding
+                    .strip('\"'))
+        except (UnicodeError, ValueError):
+            # already-decoded / non-eventsim input: don't kill the whole stream
+            return s.strip('\"')
     else:
         return s
 
-def create_or_get_spark_session(app_name, master="yarn"):
+def create_or_get_spark_session(app_name, master=None):
     """
     Creates or gets a Spark Session
 
@@ -26,6 +30,8 @@ def create_or_get_spark_session(app_name, master="yarn"):
     Returns:
         spark: SparkSession
     """
+    # SPARK_MASTER env var lets you run locally, e.g. SPARK_MASTER=local[*]
+    master = master or os.getenv("SPARK_MASTER", "yarn")
     spark = (SparkSession
              .builder
              .appName(app_name)
@@ -62,6 +68,20 @@ def create_kafka_read_stream(spark, kafka_address, kafka_port, topic, starting_o
                    .load())
 
     return read_stream
+
+
+def create_file_read_stream(spark, path, topic):
+    """
+    Local test replacement for the Kafka read stream: reads JSON lines
+    from <path>/<topic>/ and exposes them as a `value` string column,
+    the same shape that process_stream expects from Kafka.
+    """
+    return (spark
+            .readStream
+            .format("text")
+            .option("maxFilesPerTrigger", 1)
+            .load(os.path.join(path, topic))
+            .withColumnRenamed("value", "value"))
 
 
 def process_stream(stream, stream_schema, topic):
