@@ -134,3 +134,7 @@ A lot can still be done :).
 
 ### Special Mentions
 I'd like to thank the [DataTalks.Club](https://datatalks.club) for offering this Data Engineering course for completely free. All the things I learnt there, enabled me to come up with this project. If you want to upskill on Data Engineering technologies, please check out the [course](https://github.com/DataTalksClub/data-engineering-zoomcamp). :)
+## License
+
+The additions made in churnstream (local mode, `ml/`, `dashboard/`, `scripts/`, `tests/`, `Makefile`, `demo_data/`) are released under the [MIT License](LICENSE).
+The code inherited from [ankurchavda/streamify](https://github.com/ankurchavda/streamify) remains the work of its author; that repository does not state a license, so it is not covered by this one.
