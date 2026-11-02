@@ -69,7 +69,9 @@ make test
 
 ### Dashboard demo (Streamlit)
 
-Live demo: **https://churnstream.streamlit.app** *(update this link after deploying)*
+Live demo: **[churnstream-dashboard.streamlit.app](https://churnstream-dashboard.streamlit.app/)**
+
+![churnstream-dashboard](images/churnstream-dashboard.png)
 
 The dashboard falls back to a small committed sample in `demo_data/` when no live data exists, so it works on a fresh clone and on Streamlit Community Cloud.
 

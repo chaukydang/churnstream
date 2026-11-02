@@ -20,7 +20,7 @@ DEMO_MODE = not (Path(DATA_DIR) / "listen_events").exists() and DEMO_DIR.exists(
 if DEMO_MODE:  # e.g. Streamlit Community Cloud: out/ is not in git
     DATA_DIR, ML_DIR = str(DEMO_DIR), str(DEMO_DIR)
 
-st.set_page_config(page_title="Streamify", layout="wide")
+st.set_page_config(page_title="churnstream", layout="wide")
 st.title("churnstream - streaming analytics & churn risk")
 
 
