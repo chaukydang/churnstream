@@ -2,8 +2,6 @@
 
 A data pipeline with Kafka, Spark Streaming, dbt, Docker, Airflow, Terraform, GCP and much more!
 
-> Forked from [ankurchavda/streamify](https://github.com/ankurchavda/streamify). All sections are from the original project except "What I added in churnstream", which describes my extensions: a local run mode, a churn model and a dashboard. Developed with AI assistance (Claude).
-
 ## Description
 
 ### Objective
